@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Project Management</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="/static/style.css">
+
+<body>
+    <div id="dashboard">
+        <h3>Dashboard</h3>
+        <div style="display: flex; color: red; background-color: white;" id="menu1">
+            <button style="color: red; background-color: white;">Project <br> Management</button><p>+</p>
+        </div>
+        <div style="display: flex; margin-top: 30px; color: white;" id="menu1">
+            <button style="color: rgb(255, 252, 252);">Master Data</button><p>+</p>
+        </div>
+    </div>
+    <div id="content">
+        <nav class="navbar">
+            <span style="margin-right: 130px;">☰ Menu</span>
+            <input type="text" class="search" placeholder="Search..." style="width: 30%; margin-left: 130px; margin-right: 130px;">
+            <span class="notification" style="margin-left: 80px;">📌</span>
+            <span class="profile" style="margin-left: 20px;">➢</span>
+            <span class="profile" onclick="show()" style="margin-left: 20px;"> Admin</span>
+            <form action="/logout" method="post" style="margin-left: 10px;">
+                <button type="submit" id="logoutbtn" >Logout</button>
+            </form>
+        </nav>
+        <div class="container">
+            <h3> <i></i> Edit Project Management Details </h3>
+            
+            <div class="static-fields">
+                <div class="form-group" style="margin: 50px 0px;">
+                    <label>Project Name: <br><input type="text" name="name" required></label>
+                    <label>Contract Number: <br> <input type="text" name="entry_id" required></label>
+    
+                    <label>Current Status: <br>
+                        <select name="status" required>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </label>
+                    <label>Start Date: <br> <input type="date" name="start_date" required></label>
+                    <label>End Date: <br> <input type="date" name="end_date" required></label>
+                </div>
+            </div>
+    
+            <button id="add-row" class="btn">Add Row</button>
+            
+            <div id="dynamic-rows">
+                <div class="dynamic-row">
+                    <div class="form-group" style="padding: 0px 50px;">
+                        <input type="file" name="file_0">
+                        <input type="text" name="planned_by_0" placeholder="Planned By">
+                        <input type="date" name="planned_at_0" placeholder="Planned date">
+                        <input type="text" name="revision_id_0" placeholder="Revision ID">
+                    </div>
+                    <button class="remove-row">×</button>
+                </div>
+            </div>
+    
+            <button id="submit" class="btn">Submit</button><button id="submit" onclick="resetForm()" class="btn" style="margin-left: 10px; background-color: #ff4444;">Reset</button>
+    
+            <div id="data-table">
+                <h3>Stored Data</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Project Name:</th><th>Contract Number:</th><th>Current Status:</th><th>Start Date</th><th>End Date</th>
+                            <th>Files</th><th>Planned By</th><th>Planned At</th><th>Revision ID</th><th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="data-body"></tbody>
+                </table>
+            </div>
+        </div>
+    
+        <div id="edit-modal">
+            <div>
+                <h2>Edit Project</h2>
+                <div class="static-fields">
+                    <div class="form-group">
+                        <label>Project Name: <input type="text" id="edit-name" required></label>
+                        <label>Contract Number:<input type="text" id="edit-entry_id" required></label>
+                        <label>Status: 
+                            <select id="edit-status" required>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
+                        </label>
+                        <label>Start Date: <input type="date" id="edit-start_date" required></label>
+                        <label>End Date: <input type="date" id="edit-end_date" required></label>
+                    </div>
+                </div>
+    
+                <button id="add-edit-row" class="btn">Add Row</button>
+                
+                <div id="edit-dynamic-rows">
+                </div>
+    
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button id="save-edit" class="btn">Save Changes</button>
+                    <button id="cancel-edit" class="btn" style="background-color: #ff4444;">Cancel</button>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+<script>
+    function show() {
+        const logoutBtn = document.getElementById("logoutbtn");
+        if (logoutBtn.style.display === "none") {
+            logoutBtn.style.display = "block";
+        } else {
+            logoutBtn.style.display = "none";
+        }
+    }
+    let rowCount = 1;
+    let currentEditId = null;
+    let editRowCount = 0;
+    
+    $("#add-row").click(() => {
+        const newRow = `
+            <div class="dynamic-row">
+                <div class="form-group">
+                    <input type="file" name="file_${rowCount}">
+                    <input type="text" name="planned_by_${rowCount}" placeholder="Planned By">
+                    <input type="date" name="planned_at_${rowCount}">
+                    <input type="text" name="revision_id_${rowCount}" placeholder="Revision ID">
+                </div>
+                <button class="remove-row">×</button>
+            </div>
+        `;
+        $("#dynamic-rows").append(newRow);
+        rowCount++;
+    });
+
+    $(document).on("click", ".remove-row", function() {
+        if ($(this).closest("#dynamic-rows, #edit-dynamic-rows").find(".dynamic-row").length > 1) {
+            $(this).closest(".dynamic-row").remove();
+        } else {
+            alert("You must keep at least one row");
+        }
+    });
+
+    $("#submit").click(async () => {
+        const formData = new FormData();
+        
+        formData.append("name", $("input[name='name']").val());
+        formData.append("entry_id", $("input[name='entry_id']").val());
+        formData.append("status", $("select[name='status']").val());
+        formData.append("start_date", $("input[name='start_date']").val());
+        formData.append("end_date", $("input[name='end_date']").val());
+
+        $(".dynamic-row", "#dynamic-rows").each((index, row) => {
+            const fileInput = $(row).find("input[type='file']")[0];
+            if (fileInput.files[0]) {
+                formData.append("files", fileInput.files[0]);
+            }
+            formData.append("planned_bys", $(row).find("input[name^='planned_by']").val());
+            formData.append("planned_ats", $(row).find("input[name^='planned_at']").val());
+            formData.append("revision_ids", $(row).find("input[name^='revision_id']").val());
+        });
+
+        try {
+            const response = await fetch("/submit", {
+                method: "POST",
+                body: formData
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || "Unknown error");
+            }
+            
+            loadData();
+            alert("Data saved successfully!");
+            resetForm();
+        } catch (error) {
+            alert("Error: " + error.message);
+        }
+    });
+    async function loadData() {
+        try {
+            const response = await fetch("/data");
+            const projects = await response.json();
+            
+            $("#data-body").empty();
+            projects.forEach(project => {
+                const row = `
+                    <tr data-id="${project.id}">
+                        <td>${project.name}</td>
+                        <td>${project.entry_id}</td>
+                        <td>${project.status}</td>
+                        <td>${project.start_date}</td>
+                        <td>${project.end_date}</td>
+                        <td>${project.file_paths ? project.file_paths.join(", <br>") : ''}</td>
+                        <td>${project.planned_bys ? project.planned_bys.join(", <br>") : ''}</td>
+                        <td>${project.planned_ats ? project.planned_ats.join(", <br>") : ''}</td>
+                        <td>${project.revision_ids ? project.revision_ids.join(", <br>") : ''}</td>
+                        <td>
+                            <button class="btn edit">Edit</button>
+                            <button class="btn delete">Delete</button>
+                        </td>
+                    </tr>
+                `;
+                $("#data-body").append(row);
+            });
+        } catch (error) {
+            console.error("Error loading data:", error);
+        }
+    }
+
+    function resetForm() {
+        $("input[name='name']").val('');
+        $("input[name='entry_id']").val('');
+        $("select[name='status']").val('active');
+        $("input[name='start_date']").val('');
+        $("input[name='end_date']").val('');
+        
+        $("#dynamic-rows").empty();
+        $("#dynamic-rows").append(`
+            <div class="dynamic-row">
+                <div class="form-group">
+                    <input type="file" name="file_0">
+                    <input type="text" name="planned_by_0" placeholder="Planned By">
+                    <input type="date" name="planned_at_0">
+                    <input type="text" name="revision_id_0" placeholder="Revision ID">
+                </div>
+                <button class="remove-row">×</button>
+            </div>
+        `);
+        rowCount = 1;
+    }
+
+    $(document).on("click", ".delete", async function() {
+        const id = $(this).closest("tr").data("id");
+        if (confirm("Are you sure you want to delete this project?")) {
+            await fetch(`/delete/${id}`, { method: "DELETE" });
+            loadData();
+        }
+    });
+    $(document).on("click", ".edit", function() {
+        const id = $(this).closest("tr").data("id");
+        currentEditId = id;
+  
+        fetch(`/data`)
+            .then(response => response.json())
+            .then(projects => {
+                const project = projects.find(p => p.id == id);
+                if (project) {
+                    $("#edit-name").val(project.name);
+                    $("#edit-entry_id").val(project.entry_id);
+                    $("#edit-status").val(project.status);
+                    $("#edit-start_date").val(project.start_date.split('T')[0]);
+                    $("#edit-end_date").val(project.end_date.split('T')[0]);
+                    
+                    $("#edit-dynamic-rows").empty();
+                    editRowCount = 0;
+                    
+                    const maxLength = Math.max(
+                        project.file_paths?.length || 0,
+                        project.planned_bys?.length || 0,
+                        project.planned_ats?.length || 0,
+                        project.revision_ids?.length || 0
+                    );
+                    
+                    for (let i = 0; i < maxLength; i++) {
+                        addEditRow(
+                            project.file_paths?.[i] || "",
+                            project.planned_bys?.[i] || "",
+                            project.planned_ats?.[i] || "",
+                            project.revision_ids?.[i] || ""
+                        );
+                    }
+                    
+                    $("#edit-modal").show();
+                }
+            });
+    }); 
+function addEditRow(filePath = "", plannedBy = "", plannedAt = "", revisionId = "") {
+    const newRow = `
+        <div class="dynamic-row">
+            <div class="form-group">
+                <input type="file" name="edit-file_${editRowCount}"> ${filePath ? `<span>Current file: ${filePath}</span>` : ''}
+                <input type="hidden" name="existing_file_${editRowCount}" value="${filePath}">
+                <input type="text" name="edit-planned_by_${editRowCount}" placeholder="Planned By" value="${plannedBy}">
+                <input type="date" name="edit-planned_at_${editRowCount}" value="${plannedAt.split('T')[0] || plannedAt}">
+                <input type="text" name="edit-revision_id_${editRowCount}" placeholder="Revision ID" value="${revisionId}">
+               
+            </div>
+            <button class="remove-row">×</button>
+        </div>
+    `;
+    $("#edit-dynamic-rows").append(newRow);
+    editRowCount++;
+}
+
+    $("#add-edit-row").click(() => {
+        addEditRow();
+    });
+$("#save-edit").click(async () => {
+    const formData = new FormData();
+    
+    formData.append("name", $("#edit-name").val());
+    formData.append("entry_id", $("#edit-entry_id").val());
+    formData.append("status", $("#edit-status").val());
+    formData.append("start_date", $("#edit-start_date").val());
+    formData.append("end_date", $("#edit-end_date").val());
+
+    const existing_files = [];
+    
+    $(".dynamic-row", "#edit-dynamic-rows").each((index, row) => {
+        const $row = $(row);
+        const fileInput = $row.find("input[type='file']")[0];
+        const existingFile = $row.find("input[name^='existing_file']").val();
+        existing_files.push(existingFile || "");
+        
+        if (fileInput.files[0]) {
+            formData.append("files", fileInput.files[0]);
+        }
+        
+        formData.append("planned_bys", $row.find("input[name^='edit-planned_by']").val());
+        formData.append("planned_ats", $row.find("input[name^='edit-planned_at']").val());
+        formData.append("revision_ids", $row.find("input[name^='edit-revision_id']").val());
+    });
+
+    formData.append("existing_files", JSON.stringify(existing_files));
+
+    try {
+        const response = await fetch(`/update/${currentEditId}`, {
+            method: "PUT",
+            body: formData
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || "Update failed");
+        }
+        
+        loadData();
+        $("#edit-modal").hide();
+        alert("Project updated successfully!");
+    } catch (error) {
+        console.error("Update error:", error);
+        alert(`Error: ${error.message}`);
+    }
+});
+    $("#cancel-edit").click(() => {
+        $("#edit-modal").hide();
+    });
+
+    $("#edit-modal").click(function(e) {
+        if (e.target === this) {
+            $(this).hide();
+        }
+    });
+
+    loadData();
+</script>
+
+</body>
+</html>

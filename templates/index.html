@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <style>
+        
+body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #667eea, #03c370);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+
+div {
+    background: white;
+    padding: 40px 80px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    
+    width: 300px;
+}
+
+div h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 50px;
+}
+div label{
+    display: block;
+    margin-bottom: 10px;
+}
+div input[type="text"],  div input[type="password"] {
+    width: 90%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+div input[type="submit"] {
+    border-radius: 10px;
+    background-color: #0954a4;
+    color: #ffffff;
+    padding: 10px 20px;
+    border: none;
+}
+    </style>
+
+</head>
+<body>
+    <div>
+        <h1>Admin Login</h1>
+    <form action="/admin" method="post"> 
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" required><br>
+        
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required><br>
+        
+        <input type="submit" id="submit" value="Login">
+    </form>
+    </div>
+</body>
+</html>
