@@ -185,7 +185,7 @@ async def delete_project(project_id: int):
         db.close()
 
 
-# the other ports not working well use this port for the app
+# the other ports not working well use this port
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=9000)
